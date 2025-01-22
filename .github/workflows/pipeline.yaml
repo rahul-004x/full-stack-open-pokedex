@@ -8,8 +8,6 @@ on:
   pull_request:
     branches: [main]
     types: [opened, synchronize]
-  pull_request_target:
-    types: [closed]
 
 jobs:
   simple_development_pipeline:
@@ -20,7 +18,7 @@ jobs:
         with: 
           node-version: '20'
       - name: Install dependencies
-        run : npm install
+        run: npm install  
       - name: Check Style
         run : npm run eslint
       - name: build
@@ -37,15 +35,38 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+
   tag_release:
     needs: [simple_development_pipeline]
-    if: ${{ github.event_name == 'push' }}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}  
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v4
       - name: Bump version and push tag    
-        uses: anothrNick/github-tag-action@v1.64.0
+        uses: anothrNick/github-tag-action@1.67.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BUMP: patch
           WITH_V: true
+
+  deploy:
+    needs: [simple_development_pipeline, tag_release]
+    name: Deploy app
+    runs-on: ubuntu-20.04
+    environment: production
+    concurrency: 
+      group: deploy-group
+      cancel-in-progress: true  
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}  
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      - name: Delete tag if deployment fails
+        if: failure()
+        run: |
+          TAG=$(git describe --tags --abbrev=0)
+          git push --delete origin $TAG
+          git tag -d $TAG
