@@ -40,9 +40,12 @@ jobs:
     needs: [simple_development_pipeline]
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}  
     runs-on: ubuntu-20.04
+    outputs:
+      new_tag: ${{ steps.tag_version.outputs.new_tag }}
     steps:
       - uses: actions/checkout@v4
       - name: Bump version and push tag    
+        id: tag_version
         uses: anothrNick/github-tag-action@1.67.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -67,6 +70,6 @@ jobs:
       - name: Delete tag if deployment fails
         if: failure()
         run: |
-          TAG=$(git describe --tags --abbrev=0)
-          git push --delete origin $TAG
-          git tag -d $TAG
+          git fetch --tags
+          git push --delete origin ${{ needs.tag_release.outputs.new_tag }}
+          git tag -d ${{ needs.tag_release.outputs.new_tag }}
