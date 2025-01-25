@@ -16,7 +16,7 @@ primary_region = 'bom'
   auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
-  processes = ['app']
+  processes = ["app"]
 
 [[http_service.checks]]
   grace_period = "30s"
@@ -27,8 +27,3 @@ primary_region = 'bom'
 
 [deploy]
   strategy = "canary"
-
-[[vm]]
-  memory = '1gb'
-  cpu_kind = 'shared'
-  cpus = 1
