@@ -46,7 +46,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Bump version and push tag    
         id: tag_version
-        uses: anothrNick/github-tag-action@1.67.0
+        uses: anothrNick/github-tag-action@f278d49d30cdd8775cc3e7dd00b5ee11686ee297
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BUMP: patch
@@ -67,9 +67,29 @@ jobs:
       - run: flyctl deploy --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-      - name: Delete tag if deployment fails
+      - name: Delete tag if d;eployment fails
         if: failure()
         run: |
           git fetch --tags
           git push --delete origin ${{ needs.tag_release.outputs.new_tag }}
           git tag -d ${{ needs.tag_release.outputs.new_tag }}
+  
+  notification:
+    needs: [deploy]
+    runs-on: ubuntu-20.04
+    if: always()
+    steps:
+      - name: Test success
+        uses: rjstone/discord-webhook-notify@1399c1b2d57cc05894d506d2cfdc33c5f012b993
+        if: success()
+        with:
+          severity: info
+          details: Test Succeeded!
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+      - name: Test failure
+        uses: rjstone/discord-webhook-notify@1399c1b2d57cc05894d506d2cfdc33c5f012b993
+        if: failure()
+        with:
+          severity: error
+          details: Test Failed!
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}

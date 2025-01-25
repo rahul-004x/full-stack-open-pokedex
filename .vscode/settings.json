@@ -1,0 +1,5 @@
+{
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-workflow.json": "file:///c%3A/Users/dell/OneDrive/Desktop/fullstackopen/Fullstack-open/Part11/full-stack-open-pokedex/.github/workflows/pipeline.yaml"
+  }
+}
