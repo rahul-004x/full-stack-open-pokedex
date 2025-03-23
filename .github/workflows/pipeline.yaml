@@ -67,7 +67,7 @@ jobs:
       - run: flyctl deploy --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-      - name: Delete tag if d;eployment fails
+      - name: Delete tag if deployment fails
         if: failure()
         run: |
           git fetch --tags
